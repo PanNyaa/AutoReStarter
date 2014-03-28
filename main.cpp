@@ -4,7 +4,6 @@
 #include <windows.h>
 
 
-static int first_flag=0;		//ごめんなさいごめんなさいCheck(int)で使っていたのをグローバル変数にしました
 
 
 int chkfile(char*);
@@ -17,7 +16,7 @@ int First();
 int Check(int);
 int ini(void);
 
-char dir_path[256];
+
 char file_path[256];
 
 int WINAPI WinMain(HINSTANCE hInstance ,HINSTANCE hPrevInstance ,PSTR lpCmdLine ,int nCmdShow){
@@ -33,18 +32,12 @@ int WINAPI WinMain(HINSTANCE hInstance ,HINSTANCE hPrevInstance ,PSTR lpCmdLine 
 			/*
 			sprintf(cmdbuf,"スリープ復帰したので、\n%s\nを起動し直します。",file_path);
 			MessageBox(NULL , cmdbuf , "AutoReStarter" , MB_OK | MB_TOPMOST);*/
-			/*
-			sprintf(cmdbuf,"cd \"%s\" ",dir_path);
-			system(cmdbuf);
-			sprintf(cmdbuf,"cd \"%s\" ",dir_path);
-			system(cmdbuf);*/
-
 			sprintf(cmdbuf,"\"%s\" ",file_path);
 			system(cmdbuf);
-			first_flag=0;
-		}else{
-			_sleep(1);	//これが無いと(CPU使用率が)大変なことになります
+			Check(10);	//チェック状態リセット
 		}
+		
+		_sleep(1);	//これが無いと(CPU使用率が)大変なことになります
 
 	}
 
@@ -63,8 +56,8 @@ int First(){
 
 int Check(int stoptime){
 	static time_t now_time=0;
-
-	static int stop_flag=0;
+	static int first_flag=0;
+	int stop_flag=0;
 
 	if(first_flag == 0){
 		now_time = time(NULL);
@@ -128,12 +121,6 @@ int ini(void){
 			return -1;
 		}else{
 			strcpy(file_path,buf);
-			for(int i=0;;i++){
-				if( buf[255 - i] != '\\' && buf[255 - i] != '/' ){
-					buf[255 - i] = '\0';
-				}else{break;}
-			}
-			strcpy(dir_path,buf);
 		}
 	}
 
@@ -162,14 +149,7 @@ int chkfile(char* path){
 
 //文字配列内に指定した文字がいくつ存在するかを返す関数
 int strcnt(char *str,const char *c){
-	/*
-	int i=0,j=0;
-	for(;*str != '\0' && size != j;*str++, j++){
-		if(*str == c)
-			i++;
-	}
-	return i;
-	*/
+
 	char *p;
 	int  len,i=0;
 	
@@ -196,15 +176,12 @@ int strcnt(char *str,const char *c){
 //元のサイズよりも大きくなったときはエラーを返します。(-1　か　必要なサイズ？)
 int strrep(char *str,const char *search,const char *replace){
 
-	/*　実装しましょう　*/
-
-	char *p,*p_strend;
+	char *p;
 	int len,len_s,len_r,re_cnt;
 
-	len = strlen(str);						//検索先文字列の長さを得る
+	len = strlen(str);			//検索先文字列の長さを得る
 	len_s = strlen(search);			//指定された検索する文字列の長さを得る
-	len_r = strlen(replace);			//指定された置換する文字列の長さを得る
-	p_strend = str + len;				//文字列終端のポインタを得る
+	len_r = strlen(replace);		//指定された置換する文字列の長さを得る
 	re_cnt = strcnt(str,search);		//指定された検索する文字列の数を得る
 
 	if(len_s < len_r){
@@ -212,35 +189,14 @@ int strrep(char *str,const char *search,const char *replace){
 	}
 
 	for(;;){
-
-		if( (p = strstr(str,search)) != NULL ){		//検索先文字列から指定文字がHITしたら
+		if( (p = strstr(str,search)) != NULL ){	//検索先文字列から指定文字がHITしたら
 		
 			strncpy(p,replace,len_r);	//置換文字数分だけ置換
-		
-#ifdef COMENNTOUT
-		//p+=*search;	//strncpyをした時点でのポインタの位置は、置換した文字の先頭？にあるので、置換前文字数分、アドレス移動
-		for(;;){
-			/*　https://twitter.com/pan_nyaa/status/430581427516620800　アイディアをまとめた　*/
-			/*　文字列終端のポインタを取得して、現在ポインタとfseekしてその区間分の可変長配列を生成してそっちに退避させて、元文字列と退避文字列の間の\0を削除して連結、っていうアルゴリズム　*/
-			/*　いまのままだと、置換処理はできてるけど、strncpyの仕様上\0で埋まってしまうのでそこで文字列が途切れてしまう。　*/
-			/*　そこで、↑にまとめた処理を挟んで連結させてみる　*/
-			/*char *_str;
-			if( ( _str = (char *)malloc(pseek(p+len_s,p_strend) ) ) == NULL)return -1;*/
-
-			strcpy( p,p+len_s);
-			//strcpy( str + pseek(str,p),p );
-			break;
-		}
-#endif
-			strcpy( p+len_r,p+len_s);	//これだけでいいですね(まっしろめ)
-		/*　p+len_r　が指し示す位置は、置換後文字列部分の終端+1の場所。p+len_s　が指し示す位置は、置換前文字列の終端+1　*/
-		/*　つまり、OOOOXXXOOO　のXXXをTTに変えるとき、*/
-		/*　　　　　OOOOXXXOOO　が　*/
-		/*　　　　　OOOOTTXOOO　になり、（まだ余剰分はそのまま）　*/
-		/*　　　　　OOOOTTOOO　になる。（余剰分が詰められる）　*/
+			strcpy( p+len_r,p+len_s);	//置換しきらなかった部分を詰める
+			
 		}
 		if(--re_cnt <= 0)
-			break;			//検索文字列の回数分だけ、繰り返す
+			break;				//検索文字列の回数分だけ、繰り返す
 	}
 	return 0;
 }
