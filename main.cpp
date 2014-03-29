@@ -12,7 +12,7 @@ int strrep(char*,const char*,const char*);
 
 
 
-int First();
+int First(void);
 int Check(int);
 int ini(void);
 
@@ -44,7 +44,7 @@ int WINAPI WinMain(HINSTANCE hInstance ,HINSTANCE hPrevInstance ,PSTR lpCmdLine 
 	return 0;
 }
 
-int First(){
+int First(void){
 	if( ini() == -1 ){
 		return -1;
 	}else{
