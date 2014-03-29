@@ -147,16 +147,16 @@ int chkfile(char* path){
 	}
 }
 
-//文字配列内に指定した文字がいくつ存在するかを返す関数
-int strcnt(char *str,const char *c){
+//文字配列内に指定した文字列がいくつ存在するかを返す関数
+int strcnt(char *str,const char *search){
 
 	char *p;
 	int  len,i=0;
 	
-	len = strlen(c);
+	len = strlen(search);
 
 	for(;;){
-		if( (p = strstr(str,c)) != NULL ){		//検索先文字列から指定文字がHITしたら
+		if( (p = strstr(str,search)) != NULL ){		//検索先文字列から指定文字がHITしたら
 			i++;
 			str = p+len+1;
 		}else{
